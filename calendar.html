@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Календар активности</title>
+  <style>
+    @font-face {
+  font-family: 'OrtoRNIDS';
+  src: url('https://24x7group.github.io/ezi-calendar/OrtoRNIDS.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+    body {
+      font-family: 'OrtoRNIDS', Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      background-color: #f7f7f7;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    .accordion-month {
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .accordion-header {
+      background-color: #e9ecef;
+      cursor: pointer;
+      padding: 12px 16px;
+      font-weight: bold;
+      border-radius: 8px 8px 0 0;
+      user-select: none;
+    }
+    .accordion-content {
+      overflow: hidden;
+      max-height: 0;
+      padding: 0 16px;
+      border-top: 1px solid #ccc;
+      transition: max-height 0.4s ease, padding 0.4s ease;
+    }
+    .accordion-content.open {
+      padding: 16px;
+      max-height: 1000px; /* dovoljno veliko da prikaže sadržaj */
+    }
+    .event {
+        padding-bottom: 10px;
+      padding-top: 10px;
+      border-radius: 5px;
+      padding-left: 5px;
+      padding-right: 5px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px dashed #ccc;
+      transition: background-color 0.3s ease;
+    }
+    .event:last-child {
+      border-bottom: none;
+    }
+    .event strong {
+      font-size: 1.1em;
+      color: #444;
+    }
+    .event .dodatak {
+      color: #888;
+      font-style: italic;
+      font-size: 0.9em;
+      margin-top: 6px;
+      display: block;
+    }
+    .event.completed {
+      background-color: #ddd;
+      color: #666;
+      text-decoration: line-through;
+      padding-bottom: 10px;
+      padding-top: 10px;
+      border-radius: 5px;
+      padding-left: 5px;
+      padding-right: 5px;
+    }
+    .event.completed strong {
+      color: #666;
+    }
+    .checkbox-label {
+        border-radius: 5px;
+        border: 1px solid #888;
+        padding: 5px;
+        padding-right: 10px;
+      display: inline-flex;
+      align-items: center;
+      margin-top: 8px;
+      cursor: pointer;
+      font-size: 0.9em;
+      color: #333;
+      user-select: none;
+    }
+    .checkbox-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-right: 6px;
+      cursor: pointer;
+      accent-color: #2a7ae2;
+      flex-shrink: 0;
+    }
+
+    .header {
+        display: flex;
+    justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 90px;
+  background-color: #0b2e41;
+  z-index: 1000;
+}
+
+    .logo24x7div {
+width: 50px;
+height: 50px;
+      /* Removed fixed and margin-top/bottom as logogroup will handle positioning */
+    }
+
+
+    .logo24x7img{
+        width: 100%;
+        height: 100%;
+        margin: auto;
+    }
+
+
+      .logoezidiv {
+/*width: 50px;*/
+height: 50px;
+      /* Removed fixed and margin-top/bottom as logogroup will handle positioning */
+    }
+
+
+    .logoeziimg{
+        width: 100%;
+        height: 100%;
+        margin: auto;
+    }
+
+    .logogroup{
+        display: flex;
+        gap: 15px; /* This correctly gaps the inner divs by 10px */
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center; /* This centers horizontally */
+        align-items: center; /* This centers items along the cross axis (vertically in a row) */
+        position: absolute; /* Added for vertical centering */
+        top: 50%; /* Added for vertical centering */
+        transform: translateY(-50%); /* Added for vertical centering */
+    }
+  </style>
+  <div class="header">
+    <div class="logogroup">
+        <div class="logo24x7div">
+      <img src="https://24x7group.github.io/ezi-calendar/24x7grouplogowhite.png" alt="24x7group logo" class="logo24x7img" />
+    </div>
+    <div style="width: 2px; height: 50px; background-color: white;"></div>
+    <div class="logoezidiv">
+      <img src="https://24x7group.github.io/ezi-calendar/ezilogowhite.png" alt="ezi logo" class="logoeziimg" />
+    </div>
+    </div>
+    
+</div>
+</head>
+<body>
+    <div style="height: 90px;"></div>
+  <h1>Календар активности</h1>
+  <div id="accordion-container">Учитавање активности...</div>
+
+  <script>
+    const API_KEY = "patimQl0r4ZRPEsFI.45b112ddfd305ebd3b1805cb8c30f5388ede10bf779f966675bb14b55a9434b8";
+    const BASE_ID = "appioPf3pvVQci7CJ";
+    const TABLE_NAME = "tblH7IWzaDAiNd4Pg";
+
+    function capitalizeFirstLetter(string) {
+      return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    async function fetchEvents() {
+      try {
+        const res = await fetch(`https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?sort[0][field]=od&sort[0][direction]=asc`, {
+          headers: { Authorization: `Bearer ${API_KEY}` }
+        });
+
+        const data = await res.json();
+        if (!data.records) {
+          throw new Error(data.error?.message || "Nepoznata greška — proveri API ključ, base ID ili naziv tabele.");
+        }
+
+        // Vraćamo i id i fields
+        return data.records.map(record => ({
+          id: record.id,
+          fields: record.fields
+        }));
+      } catch (err) {
+        console.error("Greška:", err.message || err);
+        document.getElementById("accordion-container").textContent =
+          "Greška pri učitavanju podataka: " + (err.message || "Nepoznata greška");
+        return [];
+      }
+    }
+
+    function groupByMonth(events) {
+      const grouped = {};
+      for (const event of events) {
+        if (!event.fields.od) continue;
+        const date = new Date(event.fields.od);
+        const month = capitalizeFirstLetter(
+          date.toLocaleString("sr-RS", { month: "long", year: "numeric" })
+        );
+        if (!grouped[month]) grouped[month] = [];
+        grouped[month].push(event);
+      }
+      return grouped;
+    }
+
+    function loadCompletedEvents() {
+      const data = localStorage.getItem("completedEvents");
+      return data ? JSON.parse(data) : {};
+    }
+
+    function saveCompletedEvents(completed) {
+      localStorage.setItem("completedEvents", JSON.stringify(completed));
+    }
+
+    function renderAccordion(groupedEvents) {
+      const container = document.getElementById("accordion-container");
+      container.innerHTML = "";
+
+      const today = new Date();
+      const currentMonthStr = capitalizeFirstLetter(
+        today.toLocaleString("sr-RS", { month: "long", year: "numeric" })
+      );
+
+      const completedEvents = loadCompletedEvents();
+
+      for (const [month, events] of Object.entries(groupedEvents)) {
+        const header = document.createElement("div");
+        header.className = "accordion-header";
+        header.textContent = month;
+
+        const content = document.createElement("div");
+        content.className = "accordion-content";
+
+        if (month === currentMonthStr) {
+          content.classList.add("open");
+        }
+
+        events.forEach(event => {
+          const od = event.fields.od ? new Date(event.fields.od) : null;
+          const do_ = event.fields.do ? new Date(event.fields.do) : null;
+
+          let dodatak = "";
+          if (od && do_) {
+            if (od.getMonth() !== do_.getMonth() || od.getFullYear() !== do_.getFullYear()) {
+              dodatak = `<span class="dodatak">(Догађај прелази у следећи месец!)</span>`;
+            }
+          }
+
+          const div = document.createElement("div");
+          div.className = "event";
+
+          // Da li je ovaj event završen (prema localStorage)
+          const isCompleted = !!completedEvents[event.id];
+          if (isCompleted) {
+            div.classList.add("completed");
+          }
+
+          div.innerHTML = `
+            <strong>${event.fields.naziv || "(Без назива)"}</strong><br>
+            📅 Од: ${od ? od.toLocaleDateString() : "?"}<br>
+            📅 До: ${do_ ? do_.toLocaleDateString() : "?"}<br>
+            📝 Опис: ${event.fields.opis || "Nema opisa"}<br>
+            ${dodatak}
+            <label class="checkbox-label">
+              <input type="checkbox" ${isCompleted ? "checked" : ""} />
+              Завршено
+            </label>
+          `;
+
+          // Checkbox event handler
+          const checkbox = div.querySelector("input[type=checkbox]");
+          checkbox.addEventListener("change", () => {
+            completedEvents[event.id] = checkbox.checked;
+            saveCompletedEvents(completedEvents);
+            if (checkbox.checked) {
+              div.classList.add("completed");
+            } else {
+              div.classList.remove("completed");
+            }
+          });
+
+          content.appendChild(div);
+        });
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "accordion-month";
+        wrapper.appendChild(header);
+        wrapper.appendChild(content);
+        container.appendChild(wrapper);
+
+        header.addEventListener("click", () => {
+          content.classList.toggle("open");
+        });
+      }
+    }
+
+    fetchEvents().then(events => {
+      const grouped = groupByMonth(events);
+      renderAccordion(grouped);
+    });
+  </script>
+</body>
+</html>
