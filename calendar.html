@@ -119,7 +119,22 @@
   background-color: #0b2e41;
   z-index: 1000;
 }
+#myTargetDiv {
+    padding: 10px;
+      background-color: white;
+      margin: 20px auto; /* Center it like accordion-month */
+      border: 1px dashed #ccc;
+      
+      border-radius: 8px;
+    }
 
+    .wrap-image {
+  width: 60px;
+  height: 60px;
+  float: left; /* Floats the image to the left */
+  margin-right: 15px; /* Adds space to the right of the image */
+  margin-bottom: 10px; /* Adds space below the image */
+}
     .logo24x7div {
 width: 50px;
 height: 50px;
@@ -175,6 +190,12 @@ height: 50px;
 <body>
     <div style="height: 90px;"></div>
   <h1>Календар активности</h1>
+<div id="myTargetDiv">
+          <img src="https://24x7group.github.io/ezi-calendar/info.png" alt="24x7group logo" class="wrap-image" />
+
+    <strong>Означавање активности као завршене</strong><br>
+    <br>
+Сваку активност можете означити као завршену, а Ваш уређај ће запамтити ту информацију како бисте лакше пратили своје обавезе. Податак о завршетку активности се бележи искључиво на Вашем уређају, не шаље се на интернет и остаје сачуван само на истом уређају!</div>  
   <div id="accordion-container">Учитавање активности...</div>
 
   <script>
@@ -315,6 +336,17 @@ height: 50px;
       }
     }
 
+    const accordionMonth = document.querySelector('.accordion-month');
+      const targetDiv = document.getElementById('myTargetDiv');
+
+      if (accordionMonth && targetDiv) {
+        // Get the computed width of the accordion-month
+        const accordionWidth = accordionMonth.offsetWidth + 'px';
+
+        // Apply this width to the target div
+        targetDiv.style.width = accordionWidth;
+        targetDiv.textContent = `This div's width matches the accordion: ${accordionWidth}`;
+      }
     fetchEvents().then(events => {
       const grouped = groupByMonth(events);
       renderAccordion(grouped);
